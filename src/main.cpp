@@ -5,7 +5,7 @@
 #include "env.h"
 
 String previousResponseBody=""; //store previous ResponseBody to gracefully handle HTTP error 
-bool previousJson=""; //store previous mesaage to gracefully handle JSON deserialization error 
+bool previousJson=""; //store previous JSON to gracefully handle JSON deserialization error 
 const char* lightPath ="/api/light"; // define path to be added to root endpoint to GET the light state 
 const char* tempPath ="/api/temp"; // define path to be added to root endpoint to PUT the temperature
 
@@ -46,7 +46,7 @@ void setup()
 void loop()
 {
 
-  if (WiFi.status() == WL_CONNECTED)
+  if (WiFi.status() == WL_CONNECTED) // check if connected to WiFi
   {
     String response_body = appGet(ENDPOINT,API_KEY); //get request body as string 
     bool ledState = parseJSON(response_body,"light"); //convert the request body to JSON and parse the "light" key to get the state of the LED 
@@ -56,7 +56,7 @@ void loop()
 }
 
 
-String appGet(const char* _ENDPOINT,const char* _API_KEY)
+String appGet(const char* _ENDPOINT,const char* _API_KEY)//get request body as string
 {
   HTTPClient https; // declare http object
 
@@ -86,23 +86,23 @@ String appGet(const char* _ENDPOINT,const char* _API_KEY)
   return _response_body;
 }
 
-bool parseJSON (String _body, const char* _key)  //convert request body to JSON.Parse the specified key then return message as bool
+bool parseJSON (String _body, const char* _key)  //convert request body to JSON.Parse the specified key then return JSON as bool
 { 
-  JsonDocument object; // initialize JSOn object 
+  JsonDocument object; // initialize JSON object 
   DeserializationError error = deserializeJson(object, _body); // check for json conversion error 
 
-  if (error) // return errror if conversion fails 
+  if (error) // return error if conversion fails 
   {
-    bool _ERROR = previousJson;
+    bool _ERROR = previousJson; // return previous state if error occurs
     Serial.print("Deserialization failed: ");
     Serial.println(error.c_str());
     return _ERROR;
   }
 
-  bool _charJson = object[_key];
-  previousJson =_charJson;
+  bool _boolJson = object[_key];
+  previousJson =_boolJson;// update the previous state
 
-  return _charJson; 
+  return _boolJson; 
 }
 
 void setLedState(bool _ledState)
