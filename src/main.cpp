@@ -4,13 +4,14 @@
 #include <ArduinoJson.h>
 #include "env.h"
 
-String previousResponseBody="";
-const char* previousMessage="";
+String previousResponseBody=""; //store previous ResponseBody to gracefully handle HTTP error 
+bool previousJson=""; //store previous mesaage to gracefully handle JSON deserialization error 
 const char* lightPath ="/api/light"; // define path to be added to root endpoint to GET the light state 
 const char* tempPath ="/api/temp"; // define path to be added to root endpoint to PUT the temperature
 
 String appGet(const char* _ENDPOINT,const char* _API_KEY);//function prototypes
-const char* parseJSON (String _message, const char* _key);
+bool parseJSON (String _body, const char* _key);
+void setLedState(bool _ledState);
 
 
 void setup()
@@ -33,7 +34,7 @@ void setup()
     
   if ( WiFi.status() == WL_CONNECTED) {// turn on built in Led briefly when connected to wifi 
     digitalWrite(LED_PIN, HIGH);
-    delay(1000);
+    delay(500);
     digitalWrite(LED_PIN, LOW);
   }
     
@@ -48,6 +49,8 @@ void loop()
   if (WiFi.status() == WL_CONNECTED)
   {
     String response_body = appGet(ENDPOINT,API_KEY); //get request body as string 
+    bool ledState = parseJSON(response_body,"light"); //convert the request body to JSON and parse the "light" key to get the state of the LED 
+    setLedState(ledState); 
   }
 
 }
@@ -56,7 +59,7 @@ void loop()
 String appGet(const char* _ENDPOINT,const char* _API_KEY)
 {
   HTTPClient https; // declare http object
-  
+
   String PATH = String(_ENDPOINT)+String(lightPath); // add the path to the root endpoint dynamically 
   https.begin(PATH); // connect to endpoint/url
   https.addHeader("api-key", _API_KEY);// add api-key to header of get request
@@ -83,21 +86,31 @@ String appGet(const char* _ENDPOINT,const char* _API_KEY)
   return _response_body;
 }
 
-const char* parseJSON (String _message, const char* _key)  //convert request body to JSON.Parse the specified key then return message as char*
+bool parseJSON (String _body, const char* _key)  //convert request body to JSON.Parse the specified key then return message as bool
 { 
   JsonDocument object; // initialize JSOn object 
-  DeserializationError error = deserializeJson(object, _message); // check for json conversion error 
+  DeserializationError error = deserializeJson(object, _body); // check for json conversion error 
 
   if (error) // return errror if conversion fails 
   {
-    const char* _ERROR = previousMessage;
+    bool _ERROR = previousJson;
     Serial.print("Deserialization failed: ");
     Serial.println(error.c_str());
     return _ERROR;
   }
 
-  const char* _charMessage = object[_key];
-  previousMessage =_charMessage;
+  bool _charJson = object[_key];
+  previousJson =_charJson;
 
-  return _charMessage; 
+  return _charJson; 
+}
+
+void setLedState(bool _ledState)
+{
+  if(_ledState)
+    digitalWrite(LED_PIN,HIGH);
+  else
+    digitalWrite(LED_PIN,LOW);
+  
+    return;
 }
