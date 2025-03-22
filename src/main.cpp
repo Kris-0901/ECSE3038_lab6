@@ -12,8 +12,10 @@ const char* tempPath ="/api/temp"; // define path to be added to root endpoint t
 
 String getLedState(const char* _ENDPOINT,const char* _API_KEY, const char* _PATH);//function prototypes
 bool parseJSON (String _body, const char* _key);
-void putTemp(float _temp,const char* _ENDPOINT,const char* _API_KEY, const char* _PATH);
 void setLedState(bool _ledState);
+float readTemp();
+void putTemp(float _temp,const char* _ENDPOINT,const char* _API_KEY, const char* _PATH);
+
 
 
 void setup()
@@ -22,6 +24,7 @@ void setup()
   Serial.begin(115200);
 
   pinMode(LED_PIN, OUTPUT);
+  pinMode(TEMP_SENSOR, INPUT);
 
   if (IS_WOKWI) 
       WiFi.begin(SSID, PASS, CHANNEL);
@@ -53,8 +56,8 @@ void loop()
     String response_body = getLedState(ENDPOINT,API_KEY,lightPath); //get request body as string 
     bool ledState = parseJSON(response_body,"light"); //convert the request body to JSON and parse the "light" key to get the state of the LED 
     setLedState(ledState); 
-
-    putTemp(27.00,ENDPOINT,API_KEY,tempPath);
+    float currentTemperature = readTemp();
+    putTemp(currentTemperature,ENDPOINT,API_KEY,tempPath);
   }
 
 }
@@ -118,6 +121,18 @@ void setLedState(bool _ledState)
   
     return;
 }
+
+float readTemp()
+{
+  //Serial.println(analogRead(TEMP_SENSOR));
+  int _adcValue=analogRead(TEMP_SENSOR);
+  float _VOUT = (_adcValue) * (5/1023.00);//VOUT= Vin * Vref/Vres
+  float _temp = _VOUT*100; 
+  Serial.print(_temp);
+  Serial.println(" C");
+  return _temp;
+}
+
 
 void putTemp(float _temp,const char* _ENDPOINT,const char* _API_KEY, const char* _PATH)
 {   
