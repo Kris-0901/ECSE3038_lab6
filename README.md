@@ -40,5 +40,5 @@ Ask a friend to pull up the light switch site and show them that they can remote
 
 ---
 
-![Circuit](https://i.imgur.com/YOi6eLU.jpeg)
+![Website_UI](https://i.imgur.com/ewTxP1T.png)
 
